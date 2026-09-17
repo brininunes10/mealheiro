@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mealheiro">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F9F9FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161618" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>Mealheiro</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--fundo:#F9F9FB;--tinta:#1C1C1E;--suave:#8E8E93;--campo:#FFFFFF;--acento:#0B7F72}
+  @media (prefers-color-scheme: dark){:root{--fundo:#161618;--tinta:#F2F2F7;--suave:#98989F;--campo:#2C2C2E;--acento:#3CC4B0}}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--fundo);color:var(--tinta);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+  iframe{display:block;border:0;width:100%;height:100%}
+  .config{max-width:420px;margin:0 auto;padding:calc(48px + env(safe-area-inset-top)) 24px 24px;text-align:center}
+  .config img{width:96px;height:96px;border-radius:22px}
+  h1{font-size:28px;margin:16px 0 8px}
+  p{color:var(--suave);line-height:1.45;margin:0 0 20px}
+  input{width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-size:16px;background:var(--campo);color:inherit}
+  button{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:17px;font-weight:600;
+    background:var(--tinta);color:var(--fundo)}
+  .erro{color:#C8412B;font-size:14px;min-height:1.2em;margin-top:10px}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  var CHAVE = 'mealheiro-link';
+  if (/[?&]repor\b/.test(location.search)) {
+    try { localStorage.removeItem(CHAVE); } catch (e) {}
+  }
+  var link = null;
+  try { link = localStorage.getItem(CHAVE); } catch (e) {}
+
+  function valido(u){ return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u); }
+
+  function abrir(u){
+    document.body.innerHTML = '';
+    var f = document.createElement('iframe');
+    f.src = u;
+    f.title = 'Mealheiro';
+    document.body.appendChild(f);
+  }
+
+  if (link && valido(link)) { abrir(link); return; }
+
+  document.body.innerHTML =
+    '<main class="config">' +
+      '<img src="apple-touch-icon.png" alt="">' +
+      '<h1>Mealheiro</h1>' +
+      '<p>Cola o link do painel (termina em /exec). Só é pedido uma vez neste telemóvel.</p>' +
+      '<input id="link" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">' +
+      '<button id="ok" type="button">Abrir o painel</button>' +
+      '<div class="erro" id="erro" role="alert"></div>' +
+    '</main>';
+
+  document.getElementById('ok').addEventListener('click', function(){
+    var u = document.getElementById('link').value.trim().replace(/\?.*$/, '');
+    if (!valido(u)) {
+      document.getElementById('erro').textContent = 'O link tem de começar por https://script.google.com/macros/s/ e terminar em /exec.';
+      return;
+    }
+    try { localStorage.setItem(CHAVE, u); } catch (e) {}
+    abrir(u);
+  });
+})();
+</script>
+</body>
+</html>
