@@ -36,8 +36,38 @@
 <script>
 (function(){
   var CHAVE = 'mealheiro-link';
+  var CHAVE_SESSAO = 'mealheiro-sessao';
+  var frame = null;
+
+  // O Mealheiro só funciona como página principal (nunca dentro de outro site).
+  if (window.top !== window) { document.body.textContent = ''; return; }
+
+  function ler(k){ try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function gravar(k, v){ try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+
+  // Ponte com o painel: guarda a sessão aqui, onde o iPhone não a apaga.
+  function vemDoPainel(w){
+    for (var i = 0; w && i < 5; i++) {
+      if (frame && w === frame.contentWindow) return true;
+      if (w === w.parent) break;
+      w = w.parent;
+    }
+    return false;
+  }
+  window.addEventListener('message', function(ev){
+    if (!/^https:\/\/[\w-]+\.googleusercontent\.com$/.test(ev.origin)) return;
+    if (!vemDoPainel(ev.source)) return;
+    var d = ev.data || {};
+    if (d.tipo === 'mealheiro-pedir-token') {
+      ev.source.postMessage({ tipo: 'mealheiro-token', token: ler(CHAVE_SESSAO) }, ev.origin);
+    } else if (d.tipo === 'mealheiro-guardar-token' && typeof d.token === 'string' && d.token.length >= 40) {
+      gravar(CHAVE_SESSAO, d.token);
+    } else if (d.tipo === 'mealheiro-apagar-token') {
+      gravar(CHAVE_SESSAO, '');
+    }
+  });
   if (/[?&]repor\b/.test(location.search)) {
-    try { localStorage.removeItem(CHAVE); } catch (e) {}
+    gravar(CHAVE, ''); gravar(CHAVE_SESSAO, '');
   }
   var link = null;
   try { link = localStorage.getItem(CHAVE); } catch (e) {}
@@ -46,10 +76,10 @@
 
   function abrir(u){
     document.body.innerHTML = '';
-    var f = document.createElement('iframe');
-    f.src = u;
-    f.title = 'Mealheiro';
-    document.body.appendChild(f);
+    frame = document.createElement('iframe');
+    frame.src = u;
+    frame.title = 'Mealheiro';
+    document.body.appendChild(frame);
   }
 
   if (link && valido(link)) { abrir(link); return; }
